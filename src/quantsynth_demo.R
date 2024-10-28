@@ -187,7 +187,7 @@ orchy_H1a<-orchaRd::orchard_plot(model,
                              #tree.order = neworder_rev,
                              xlab='Risk ratio', 
                              flip=F, colour = T,
-                             angle=0, k.pos=5.5, legend.pos = 'none')+
+                             angle=0, k.pos=2.77, legend.pos = 'none')+
   ggplot2::scale_fill_manual(values = cbpl_temp) +
   ggplot2::scale_colour_manual(values = cbpl_temp)+
   scale_x_discrete(labels = 'Overall') +
@@ -258,7 +258,7 @@ orchy_H1b<-orchaRd::orchard_plot(model_H2,
                              xlab='Risk ratio',
                              flip=F,
                              colour=T,
-                             angle=0, k.pos=5.5, legend.pos = 'top.right')+
+                             angle=0, k.pos=2.77, legend.pos = 'top.right')+
   ggplot2::scale_fill_manual(values = cbpl_temp) +
   ggplot2::scale_colour_manual(values = cbpl_temp)+
   scale_y_continuous(limits = c(-3, 3), breaks=log(2^(-4:4)), labels=2^(-4:4)) +
