@@ -59,7 +59,7 @@ leonardetal2018_metaanalysis_df<-leonardetal2018_metaanalysis_df[!leonardetal201
 #remove head immersion from main analysis as in Leonard et al 2019
 leonardetal2018_metaanalysis_df<-leonardetal2018_metaanalysis_df[leonardetal2018_metaanalysis_df$exposureanalysis%in%c('any','both'),]
 
-## PROCESSING OF EODDS RATIOS  ------------------------------------------------------------
+## PROCESSING OF ODDS RATIOS  ------------------------------------------------------------
 
 # The metafor R package requires an 'escalc' dataframe to work with, which is the output of the 'escalc' function for calculating estimates of the association/effect
 # However, we're started with the standard dataframe from Leonard et al (2018), which already includes estimates of the association/effect (odds ratios) calculated in STATA
@@ -102,9 +102,6 @@ meanbaserate_perhealthoutcome<-
        leonardetal2018_metaanalysis_df$healthoutcomecategory,
        mean, na.rm=T)
 
-#temp fill in NAs with mean from all studies
-#leonardetal2018_metaanalysis_df$baserate[is.na(leonardetal2018_metaanalysis_df$baserate)]<-mean(leonardetal2018_metaanalysis_df$baserate, na.rm = T)
-
 #convert 'any' infection odds ratio point estimates to risk ratios 
 leonardetal2018_metaanalysis_df$yi[leonardetal2018_metaanalysis_df$healthoutcomecategory=='Any']<-metafor::transf.lnortorr(leonardetal2018_metaanalysis_df$yi[leonardetal2018_metaanalysis_df$healthoutcomecategory=='Any'], 
                                                                                        pc=meanbaserate_perhealthoutcome[names(meanbaserate_perhealthoutcome)=='Any'])
@@ -125,6 +122,10 @@ leonardetal2018_metaanalysis_df$yi[leonardetal2018_metaanalysis_df$healthoutcome
 #convert 'any' infection odds ratio variance estimates to risk ratios 
 leonardetal2018_metaanalysis_df$vi[leonardetal2018_metaanalysis_df$healthoutcomecategory=='Gastrointestinal']<-metafor::transf.lnortorr(leonardetal2018_metaanalysis_df$vi[leonardetal2018_metaanalysis_df$healthoutcomecategory=='Gastrointestinal'], 
                                                                                        pc=meanbaserate_perhealthoutcome[names(meanbaserate_perhealthoutcome)=='Gastrointestinal'])
+
+#log the resulting risk ratios to finally convert them to log risk ratios for analysis
+leonardetal2018_metaanalysis_df$yi<-log(leonardetal2018_metaanalysis_df$yi)
+leonardetal2018_metaanalysis_df$vi<-log(leonardetal2018_metaanalysis_df$vi)
 
 #remove exposure-outcome combinations for which estimates of the association/effect could not be calculated
 leonardetal2018_metaanalysis_df<-leonardetal2018_metaanalysis_df[!is.na(leonardetal2018_metaanalysis_df$yi),]
@@ -170,8 +171,10 @@ I2<-c(100 * (vcov(model)[1,1] - vcov(model_noranf)[1,1]) / vcov(model)[1,1])
 
 #estimates<-exp(cbind(model$b,model$ci.lb,model$ci.ub)) #for log odds
 estimates<-cbind(model$b,model$ci.lb,model$ci.ub)
+#take the exponential to get into risk ratio units again
+estimates<-exp(estimates)
+#round for presentation
 estimates<-round(estimates, 2)
-estimates_rev<-estimates
 
 # ORCHARD PLOT FOR OVERALL EFFECT (INTERCEPT-ONLY MODEL) -------------------------------------------------------------
 
@@ -191,7 +194,7 @@ orchy_H1a<-orchaRd::orchard_plot(model,
   ggplot2::scale_fill_manual(values = cbpl_temp) +
   ggplot2::scale_colour_manual(values = cbpl_temp)+
   scale_x_discrete(labels = 'Overall') +
-  scale_y_continuous(limits = c(-1, 7), breaks=c(0:7)) +
+  scale_y_continuous(limits = c(-1.38, 3), breaks=log(c(0.5,0,1,2,4,8,16)), labels=c(0.5,0,1,2,4,8,16)) +
   theme(axis.text.x = ggplot2::element_text(size = 15, colour ="black",
                                             hjust = 0.5,
                                             vjust = 0,
@@ -200,16 +203,7 @@ orchy_H1a<-orchaRd::orchard_plot(model,
                                             hjust = 0,
                                             vjust = 0.5,
                                             angle=0))+
-  annotate("text", x=1, y=-0.5, label=paste(estimates_rev[,1],' (',estimates_rev[,2],',',estimates_rev[,3],')', sep=''))
-  #annotate("text", x=1, y=-3, label="Odds ratio (95% CI)",fontface = 2)
-
-#remove the 'no association/effect' reference line that orchard plot puts at zero, because for the risk ratio it should be at 1 (we'll add another for 0, see below)
-orchy_H1a$layers[[2]]<-NULL # 
-
-#add reference lines in manually
-orchy_H1a<-orchy_H1a+
-           ggplot2::geom_hline(yintercept = 1, linetype = 2, colour = "black")+ #add 'no association/effect' reference line at 1
-           ggplot2::geom_hline(yintercept = 0, linetype = 1, colour = "black") #add reference line at 0 representing minimum RR (cannot be less than 0)
+  annotate("text", x=1, y=-1.38, label=paste(estimates[,1],' (',estimates[,2],',',estimates[,3],')', sep=''))
 
 #check final output
 orchy_H1a
@@ -245,14 +239,15 @@ R2<-100*(max(0,(sum(model$sigma2, model$tau2) -
 
 #estimates<-exp(cbind(model_H2$b,model_H2$ci.lb,model_H2$ci.ub)) #for log odds
 estimates<-cbind(model_H2$b,model_H2$ci.lb,model_H2$ci.ub)
-estimates<-round(estimates, 2)
+#take the exponential to get into risk ratio units again
+estimates<-exp(estimates)
+#round for presentation
+estimates<-round(estimates,2)
 
-unique(leonardetal2018_metaanalysis_df$symptom_simplified)
+#make a new order in which to plot each health outcome category
 neworder<-c('Any',
             'Ear',
             'Gastrointestinal')
-
-neworder_rev<-neworder
 
 estimates_rev<-estimates[match(neworder_rev,levels(as.factor(leonardetal2018_metaanalysis_df$healthoutcomecategory))),]
 
@@ -260,15 +255,14 @@ estimates_rev<-estimates[match(neworder_rev,levels(as.factor(leonardetal2018_met
 orchy_H1b<-orchaRd::orchard_plot(model_H2, 
                              group='studyid', 
                              mod='healthoutcomecategory', 
-                             tree.order = neworder_rev,
+                             tree.order = neworder,
                              xlab='Odds ratio',
                              flip=F,
                              colour=T,
                              angle=0, k.pos=5.5, legend.pos = 'top.right')+
   ggplot2::scale_fill_manual(values = cbpl_temp) +
   ggplot2::scale_colour_manual(values = cbpl_temp)+
-  #expand_limits(x=c(1,3))+
-  scale_y_continuous(limits = c(-1, 7), breaks=c(0:7)) +
+  scale_y_continuous(limits = c(-1.38, 3), breaks=log(c(0.5,0,1,2,4,8,16)), labels=c(0.5,0,1,2,4,8,16)) +
   theme(axis.text.x = ggplot2::element_text(size = 15, colour ="black",
                                             hjust = 0.5,
                                             vjust = 0,
@@ -277,16 +271,7 @@ orchy_H1b<-orchaRd::orchard_plot(model_H2,
                                             hjust = 0,
                                             vjust = 0.5,
                                             angle=0))+
-  annotate("text", x=1:3, y=-0.5, label=paste(estimates_rev[,1],' (',estimates_rev[,2],',',estimates_rev[,3],')', sep=''))
-  #annotate("text", x=3.5, y=-2.5, label="Odds ratio (95% CI)",fontface = 2)
-
-#remove the 'no association/effect' reference line that orchard plot puts at zero, because for the risk ratio it should be at 1 (we'll add another for 0, see below)
-orchy_H1b$layers[[2]]<-NULL # 
-
-#add reference lines in manually
-orchy_H1b<-orchy_H1b+
-  ggplot2::geom_hline(yintercept = 1, linetype = 2, colour = "black")+ #add 'no association/effect' reference line at 1
-  ggplot2::geom_hline(yintercept = 0, linetype = 1, colour = "black") #add reference line at 0 representing minimum RR (cannot be less than 0)
+  annotate("text", x=1:3, y=-1.38, label=paste(estimates_rev[,1],' (',estimates_rev[,2],',',estimates_rev[,3],')', sep=''))
 
 #check final output
 orchy_H1b
