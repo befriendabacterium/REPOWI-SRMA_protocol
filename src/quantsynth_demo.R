@@ -158,8 +158,6 @@ model <- metafor::rma.mv(yi, vi,
 
 model
 
-exp(cbind(model$b,model$ci.lb,model$ci.ub))
-
 #model with random effect removed for calculating I2 via Jackson apporach (see below)
 model_noranf <- metafor::rma.mv(yi, vi,
                                 data = leonardetal2018_metaanalysis_df,
@@ -169,7 +167,7 @@ model_noranf <- metafor::rma.mv(yi, vi,
 I2<-c(100 * (vcov(model)[1,1] - vcov(model_noranf)[1,1]) / vcov(model)[1,1])
 
 #get CI and PI estimates from model
-estimates<-orchaRd::mod_results(model_H2, group='studyid')$mod_table
+estimates<-orchaRd::mod_results(model, group='studyid')$mod_table
 #take the exponential to get into risk ratio units again
 estimates[,-1]<-exp(estimates[,-1])
 #round for presentation
@@ -250,7 +248,7 @@ neworder<-c('Any',
             'Gastrointestinal')
 
 #reorder estimates
-estimates<-estimates[match(neworder_rev,levels(as.factor(leonardetal2018_metaanalysis_df$healthoutcomecategory))),]
+estimates<-estimates[match(neworder,levels(as.factor(leonardetal2018_metaanalysis_df$healthoutcomecategory))),]
 
 #make orchard plot
 orchy_H1b<-orchaRd::orchard_plot(model_H2, 
