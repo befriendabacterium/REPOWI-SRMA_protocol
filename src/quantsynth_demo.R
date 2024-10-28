@@ -168,13 +168,12 @@ model_noranf <- metafor::rma.mv(yi, vi,
 #use Jackson approach to calculate I2 - https://www.metafor-project.org/doku.php/tips:i2_multilevel_multivariate
 I2<-c(100 * (vcov(model)[1,1] - vcov(model_noranf)[1,1]) / vcov(model)[1,1])
 
-
-#estimates<-exp(cbind(model$b,model$ci.lb,model$ci.ub)) #for log odds
-estimates<-cbind(model$b,model$ci.lb,model$ci.ub)
+#get CI and PI estimates from model
+estimates<-orchaRd::mod_results(model_H2, group='studyid')$mod_table
 #take the exponential to get into risk ratio units again
-estimates<-exp(estimates)
+estimates[,-1]<-exp(estimates[,-1])
 #round for presentation
-estimates<-round(estimates, 2)
+estimates[,-1]<-round(estimates[,-1], 2)
 
 # ORCHARD PLOT FOR OVERALL EFFECT (INTERCEPT-ONLY MODEL) -------------------------------------------------------------
 
@@ -194,7 +193,7 @@ orchy_H1a<-orchaRd::orchard_plot(model,
   ggplot2::scale_fill_manual(values = cbpl_temp) +
   ggplot2::scale_colour_manual(values = cbpl_temp)+
   scale_x_discrete(labels = 'Overall') +
-  scale_y_continuous(limits = c(-1.38, 3), breaks=log(c(0.5,0,1,2,4,8,16)), labels=c(0.5,0,1,2,4,8,16)) +
+  scale_y_continuous(limits = c(-3, 3), breaks=log(2^(-4:4)), labels=2^(-4:4)) +
   theme(axis.text.x = ggplot2::element_text(size = 15, colour ="black",
                                             hjust = 0.5,
                                             vjust = 0,
@@ -203,15 +202,16 @@ orchy_H1a<-orchaRd::orchard_plot(model,
                                             hjust = 0,
                                             vjust = 0.5,
                                             angle=0))+
-  annotate("text", x=1, y=-1.38, label=paste(estimates[,1],' (',estimates[,2],',',estimates[,3],')', sep=''))
-
-#check final output
+  annotate("text", size=3.5, x=1:nrow(estimates), y=-2.81, label=paste("Estimate = ", estimates[,2],'\n',
+                                                                 "95% CI = ", estimates[,3],' to ',estimates[,4],'\n',
+                                                                 "95% PI = ", estimates[,5],' to ',estimates[,6],'\n',
+                                                                 sep=''))
 orchy_H1a
 
 #save final output
 ggsave('figures/orchard_H1a.tiff', plot=last_plot(), width=8, height=6)
 
-# UPDATED APPROACH, SIMPLIFIED SYMPTOM CATEGORIES -------------------------------------------
+# UPDATED APPROACH, SIMPLIFIED HEALTH OUTCOME CATEGORIES -------------------------------------------
 
 #leonardetal2018_metaanalysis_df$symptom[grep('Ear discharge \\(single symptom case definition\\)|Ear infection \\(sensitive case definition\\)|Earache \\(single symptom case definition\\)',leonardetal2018_metaanalysis_df$symptom)]<-'Symptoms of ear ailments (sensitive case definitions)'
 
@@ -237,32 +237,33 @@ R2<-100*(max(0,(sum(model$sigma2, model$tau2) -
                   sum(model_H2$sigma2,model_H2$tau2)) / 
                sum(model$sigma2,model$tau2)))
 
-#estimates<-exp(cbind(model_H2$b,model_H2$ci.lb,model_H2$ci.ub)) #for log odds
-estimates<-cbind(model_H2$b,model_H2$ci.lb,model_H2$ci.ub)
+#get CI and PI estimates from model
+estimates<-orchaRd::mod_results(model_H2, group='studyid', mod='healthoutcomecategory')$mod_table
 #take the exponential to get into risk ratio units again
-estimates<-exp(estimates)
+estimates[,-1]<-exp(estimates[,-1])
 #round for presentation
-estimates<-round(estimates,2)
+estimates[,-1]<-round(estimates[,-1], 2)
 
 #make a new order in which to plot each health outcome category
 neworder<-c('Any',
             'Ear',
             'Gastrointestinal')
 
-estimates_rev<-estimates[match(neworder_rev,levels(as.factor(leonardetal2018_metaanalysis_df$healthoutcomecategory))),]
+#reorder estimates
+estimates<-estimates[match(neworder_rev,levels(as.factor(leonardetal2018_metaanalysis_df$healthoutcomecategory))),]
 
 #make orchard plot
 orchy_H1b<-orchaRd::orchard_plot(model_H2, 
                              group='studyid', 
                              mod='healthoutcomecategory', 
                              tree.order = neworder,
-                             xlab='Odds ratio',
+                             xlab='Risk ratio',
                              flip=F,
                              colour=T,
                              angle=0, k.pos=5.5, legend.pos = 'top.right')+
   ggplot2::scale_fill_manual(values = cbpl_temp) +
   ggplot2::scale_colour_manual(values = cbpl_temp)+
-  scale_y_continuous(limits = c(-1.38, 3), breaks=log(c(0.5,0,1,2,4,8,16)), labels=c(0.5,0,1,2,4,8,16)) +
+  scale_y_continuous(limits = c(-3, 3), breaks=log(2^(-4:4)), labels=2^(-4:4)) +
   theme(axis.text.x = ggplot2::element_text(size = 15, colour ="black",
                                             hjust = 0.5,
                                             vjust = 0,
@@ -271,8 +272,10 @@ orchy_H1b<-orchaRd::orchard_plot(model_H2,
                                             hjust = 0,
                                             vjust = 0.5,
                                             angle=0))+
-  annotate("text", x=1:3, y=-1.38, label=paste(estimates_rev[,1],' (',estimates_rev[,2],',',estimates_rev[,3],')', sep=''))
-
+  annotate("text", size=3.5, x=1:nrow(estimates), y=-2.81, label=paste("Estimate = ", estimates[,2],'\n',
+                                            "95% CI = ", estimates[,3],' to ',estimates[,4],'\n',
+                                            "95% PI = ", estimates[,5],' to ',estimates[,6],'\n',
+                                            sep=''))
 #check final output
 orchy_H1b
 
@@ -288,4 +291,4 @@ orchy_H1a+
   plot_layout(widths = c(1,3))
 
 #save final output
-ggsave('figures/orchard_H1a&H1b.tiff', plot=last_plot(), width=8, height=5)
+ggsave('figures/orchard_H1a&H1b.tiff', plot=last_plot(), width=9, height=5)
