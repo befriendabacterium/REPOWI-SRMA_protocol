@@ -4,18 +4,28 @@
 # Whilst the new review will focus on comparisons of estimate cases of infection in people exposed to the lowest and higher levels of polluted seawater, this demo uses the data from the Leonard et al (2018) meta-analysis, which focuses on comparisons of those not exposed and those exposed to seawater per se
 # As such, many of the pre-processing steps are solely for the purpose of wrangling the already part-processed Leonard et al 2018 data into a format suitable for demonstrating the analysis and visualisation we intend
 
-#install.packages('ggplot2')
-library(ggplot2)
-#install.packages('dplyr')
-library(dplyr)
-#install.packages('forcats')
-library(forcats)
-#install.packages('rockchalk')
-library(rockchalk)
-#install.packages('effectsize')
-library(effectsize)
-#install.packages('patchwork')
-library(patchwork)
+#make list of packages installed
+packages_installed<-installed.packages()[,'Package']
+
+#if 'renv' package is not installed, install it
+if('renv'%in%packages_installed==FALSE){
+  install.packages('renv')
+}
+
+#if 'librarian' package is not installed, install it
+if('librarian'%in%packages_installed==FALSE){
+  install.packages('librarian')
+}
+
+#make list of packages needed
+packages_needed<-renv::dependencies(path = 'src')$Package
+
+github_packages<-c('daniel1noble/orchaRd','KarstensLab/microshades')
+
+packages_needed<-c(packages_needed,github_packages)
+
+#use librarian to install any r packages you do not already have
+librarian::shelf(packages_needed)
 
 # PRE-PROCESSING ------------------------------------------------------------
 
@@ -58,6 +68,9 @@ leonardetal2018_metaanalysis_df<-leonardetal2018_metaanalysis_df[!leonardetal201
 
 #remove head immersion from main analysis as in Leonard et al 2019
 leonardetal2018_metaanalysis_df<-leonardetal2018_metaanalysis_df[leonardetal2018_metaanalysis_df$exposureanalysis%in%c('any','both'),]
+
+#remove 'Any' category as we are now removing this from the new review following peer review comments on the protocol
+leonardetal2018_metaanalysis_df<-leonardetal2018_metaanalysis_df[leonardetal2018_metaanalysis_df$healthoutcomecategory!='Any',]
 
 ## PROCESSING OF ODDS RATIOS  ------------------------------------------------------------
 
@@ -243,8 +256,7 @@ estimates[,-1]<-exp(estimates[,-1])
 estimates[,-1]<-round(estimates[,-1], 2)
 
 #make a new order in which to plot each health outcome category
-neworder<-c('Any',
-            'Ear',
+neworder<-c('Ear',
             'Gastrointestinal')
 
 #reorder estimates
@@ -290,3 +302,4 @@ orchy_H1a+
 
 #save final output
 ggsave('figures/orchard_H1a&H1b.tiff', plot=last_plot(), width=9, height=5)
+
