@@ -43,7 +43,7 @@ leonardetal2018_metaanalysis_df$numberofunexposed[leonardetal2018_metaanalysis_d
 leonardetal2018_metaanalysis_df[which(colnames(leonardetal2018_metaanalysis_df)=='numberofunexposedcaes')]
 
 #correct typo on one of column names
-leonardetal2018_metaanalysis_df<-rename(leonardetal2018_metaanalysis_df, 'numberofunexposedcases'='numberofunexposedcaes')
+leonardetal2018_metaanalysis_df<-dplyr::rename(leonardetal2018_metaanalysis_df, 'numberofunexposedcases'='numberofunexposedcaes')
 
 #rename 'Enteric' health outcome category to 'Gastrointestinal' as is more commonly used term
 leonardetal2018_metaanalysis_df$healthoutcomecategory[leonardetal2018_metaanalysis_df$healthoutcomecategory=='Enteric']<-'Gastrointestinal'
