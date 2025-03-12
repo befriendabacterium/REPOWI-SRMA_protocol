@@ -1,8 +1,8 @@
 # PREAMBLE ------------------------------------------------------------
 
 #N.B. This code is intended only to demonstrate the core meta-analytical techniques to be used in the new analysis and their visualisation, and is not intended to be definitive
-# Whilst the new review will focus on comparisons of estimate cases of infection in people exposed to the lowest and higher levels of polluted seawater, this demo uses the data from the Leonard et al (2018) meta-analysis, which focuses on comparisons of those not exposed and those exposed to seawater per se
-# As such, many of the pre-processing steps are solely for the purpose of wrangling the already part-processed Leonard et al 2018 data into a format suitable for demonstrating the analysis and visualisation we intend
+# Whilst the new review (REPOWI-SRMA) will focus on comparisons of estimate cases of infection in people exposed to the lowest and higher levels of polluted seawater, this demo uses the data from the Leonard et al (2018) meta-analysis, which focuses on comparisons of those not exposed and those exposed to seawater per se
+# As such, many of the pre-processing steps are solely for the purpose of wrangling the already part-processed Leonard et al. 2018 data into a format suitable for demonstrating the analysis and visualisation we intend for REPOWI-SRMA
 
 #make list of packages installed
 packages_installed<-installed.packages()[,'Package']
@@ -20,8 +20,10 @@ if('librarian'%in%packages_installed==FALSE){
 #make list of packages needed
 packages_needed<-renv::dependencies(path = 'src')$Package
 
+#make a list of the github packages needed
 github_packages<-c('daniel1noble/orchaRd','KarstensLab/microshades')
 
+#affix the github ones to the package list
 packages_needed<-c(packages_needed,github_packages)
 
 #use librarian to install any r packages you do not already have
@@ -39,8 +41,6 @@ leonardetal2018_metaanalysis_df<-read.csv('data/metaanalysis dataset.csv')
 #for Calderon 1982 the number exposed (2)/unexposed (11) wasn't recorded in the dataset, so we add it manually (for forest plot)
 leonardetal2018_metaanalysis_df$numberexposed[leonardetal2018_metaanalysis_df$studyid=='Calderon 1982']<-2
 leonardetal2018_metaanalysis_df$numberofunexposed[leonardetal2018_metaanalysis_df$studyid=='Calderon 1982']<-11
-
-leonardetal2018_metaanalysis_df[which(colnames(leonardetal2018_metaanalysis_df)=='numberofunexposedcaes')]
 
 #correct typo on one of column names
 leonardetal2018_metaanalysis_df<-dplyr::rename(leonardetal2018_metaanalysis_df, 'numberofunexposedcases'='numberofunexposedcaes')
@@ -87,14 +87,12 @@ leonardetal2018_metaanalysis_df <- metafor::escalc(measure="OR",
                                  #n1i=numberexposed, n2i=numberofunexposed,
                                  data=leonardetal2018_metaanalysis_df, add=T)
 
-#calc standard error of original ORs 
+#calc standard error of original ORs (https://handbook-5-1.cochrane.org/chapter_7/7_7_7_2_obtaining_standard_errors_from_confidence_intervals_and.htm)
 leonardetal2018_metaanalysis_df$or_se<-(leonardetal2018_metaanalysis_df$uor-leonardetal2018_metaanalysis_df$lor)/3.92
-#calc standard deviation of original ORs 
-leonardetal2018_metaanalysis_df$or_sd<-leonardetal2018_metaanalysis_df$or_se*sqrt(leonardetal2018_metaanalysis_df$studysize)
 
 #replace recalculated effect sizes with the original ones (note these are a mix of adjusted and unadjusted, preferring the former where available
 leonardetal2018_metaanalysis_df$yi<-leonardetal2018_metaanalysis_df$logOR
-leonardetal2018_metaanalysis_df$vi<-leonardetal2018_metaanalysis_df$logORse^2 #square for variance
+leonardetal2018_metaanalysis_df$vi<-leonardetal2018_metaanalysis_df$logORse^2 #square standard error to get sampling variance (https://www.metafor-project.org/doku.php/tips:input_to_rma_function)
 
 #add an effect size ID
 leonardetal2018_metaanalysis_df$esid<-1:nrow(leonardetal2018_metaanalysis_df)
@@ -148,6 +146,8 @@ leonardetal2018_metaanalysis_df<-leonardetal2018_metaanalysis_df[!is.na(leonarde
 
 #check number of studies again (should be 19 as reported in paper)
 length(unique(leonardetal2018_metaanalysis_df$studyid))
+
+#it's actually 18 but this is because we removed the 'Any' category in line with our intentions for REPS-SRMA, so it's OK.
 
 #set seed so colour palette generation reproduces previous version in tidy_metadata()
 set.seed(123)
@@ -233,8 +233,7 @@ model_H2 <- metafor::rma.mv(yi, vi,
                             data = leonardetal2018_metaanalysis_df,
                             control=list(rel.tol=1e-8))
 
-model_H2
-#main model_H2
+#model with random effect removed for calculating I2 via Jackson apporach (see below)
 model_H2_noranf <- metafor::rma.mv(yi, vi,
                                    mod = ~ 0 + healthoutcomecategory, 
                                    data = leonardetal2018_metaanalysis_df,
@@ -302,4 +301,3 @@ orchy_H1a+
 
 #save final output
 ggsave('figures/orchard_H1a&H1b.tiff', plot=last_plot(), width=9, height=5)
-
