@@ -98,7 +98,7 @@ The data used in this example code (data/metaanalysis dataset.csv) is from Leona
 
 - **logOR_U**: Log of the upper 95% confidence interval of the odds ratio. *Log of the upper estimate of the odds ratio used for use in meta-analysis (i.e. the 'lor' column, with adjusted preferred).*
 
-- **logORse**: Log of the OR standard error. *Log of SE of the odds ratio used for use in meta-analysis (calculated from confidence intervals; see commented out lines 96-98 in script demonstrating calculation of OR standard error which would then be logged).*
+- **logORse**: Log of the OR standard error. *Log of SE of the odds ratio used for use in meta-analysis (calculated from confidence intervals; see commented out lines 96-98 in script demonstrating calculation of unlogged OR standard error).*
 
 ## Acknowledgements
 
