@@ -20,6 +20,12 @@ if('librarian'%in%packages_installed==FALSE){
 #make list of packages needed
 packages_needed<-renv::dependencies(path = 'src')$Package
 
+#check
+packages_needed
+
+#add patchwork as it is not found by renv
+packages_needed<-c(packages_needed,'patchwork')
+
 #make a list of the github packages needed
 github_packages<-c('daniel1noble/orchaRd','KarstensLab/microshades')
 
@@ -87,8 +93,9 @@ leonardetal2018_metaanalysis_df <- metafor::escalc(measure="OR",
                                  #n1i=numberexposed, n2i=numberofunexposed,
                                  data=leonardetal2018_metaanalysis_df, add=T)
 
-#calc standard error of original ORs (https://handbook-5-1.cochrane.org/chapter_7/7_7_7_2_obtaining_standard_errors_from_confidence_intervals_and.htm)
-leonardetal2018_metaanalysis_df$or_se<-(leonardetal2018_metaanalysis_df$uor-leonardetal2018_metaanalysis_df$lor)/3.92
+#NOT USED BUT LEFT IN COMMENTED FOR DEMONSTRATIVE PURPOSES
+#calculation of standard error of original ORs (https://handbook-5-1.cochrane.org/chapter_7/7_7_7_2_obtaining_standard_errors_from_confidence_intervals_and.htm)
+#leonardetal2018_metaanalysis_df$or_se<-(leonardetal2018_metaanalysis_df$uor-leonardetal2018_metaanalysis_df$lor)/3.92
 
 #replace recalculated effect sizes with the original ones (note these are a mix of adjusted and unadjusted, preferring the former where available
 leonardetal2018_metaanalysis_df$yi<-leonardetal2018_metaanalysis_df$logOR
@@ -204,7 +211,7 @@ orchy_H1a<-orchaRd::orchard_plot(model,
   ggplot2::scale_fill_manual(values = cbpl_temp) +
   ggplot2::scale_colour_manual(values = cbpl_temp)+
   scale_x_discrete(labels = 'Overall') +
-  scale_y_continuous(limits = c(-3, 3), breaks=log(2^(-4:4)), labels=2^(-4:4)) +
+  scale_y_continuous(limits = c(-3.5, 3.5), breaks=log(2^(-4:4)), labels=2^(-4:4)) +
   theme(axis.text.x = ggplot2::element_text(size = 15, colour ="black",
                                             hjust = 0.5,
                                             vjust = 0,
@@ -272,7 +279,7 @@ orchy_H1b<-orchaRd::orchard_plot(model_H2,
                              angle=0, k.pos=2.77, legend.pos = 'top.right')+
   ggplot2::scale_fill_manual(values = cbpl_temp) +
   ggplot2::scale_colour_manual(values = cbpl_temp)+
-  scale_y_continuous(limits = c(-3, 3), breaks=log(2^(-4:4)), labels=2^(-4:4)) +
+  scale_y_continuous(limits = c(-3.5,3.5), breaks=log(2^(-4:4)), labels=2^(-4:4)) +
   theme(axis.text.x = ggplot2::element_text(size = 15, colour ="black",
                                             hjust = 0.5,
                                             vjust = 0,
@@ -289,15 +296,13 @@ orchy_H1b<-orchaRd::orchard_plot(model_H2,
 orchy_H1b
 
 #save final output
-ggsave('figures/orchard_H1a&H1b.tiff', plot=last_plot(), width=8, height=4)
-ggsave('figures/orchard_H1b.tiff', plot=last_plot(), width=8, height=6)
+ggplot2::ggsave('figures/orchard_H1b.tiff', plot=last_plot(), width=8, height=6)
 
 # COMBINED PLOT -----------------------------------------------------------
 
 #combine plots using the '+' operators from the patchwork R package
-orchy_H1a+
-  orchy_H1b+ggpubr::rremove('ylab')+ggpubr::rremove('y.text')+
+orchy_H1a+orchy_H1b+ggpubr::rremove('ylab')+ggpubr::rremove('y.text')+
   plot_layout(widths = c(1,3))
 
 #save final output
-ggsave('figures/orchard_H1a&H1b.tiff', plot=last_plot(), width=9, height=5)
+ggplot2::ggsave('figures/orchard_H1aH1b_combined.tiff', plot=last_plot(), width=8, height=5)
