@@ -102,7 +102,7 @@ The data used in this example code (data/metaanalysis dataset.csv) is from Leona
 
 ## Acknowledgements
 
-We greatly thank Ed Ivimey-Cook (@EIvimeyCook) for kindly checking the code, data and documentation in this repository.
+We greatly thank Ed Ivimey-Cook ([@EIvimeyCook](https://github.com/eivimeycook)) for kindly checking the code, data and documentation in this repository.
 
 ## Bibliography
 
